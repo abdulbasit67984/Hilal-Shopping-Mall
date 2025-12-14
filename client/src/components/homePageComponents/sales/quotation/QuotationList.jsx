@@ -237,7 +237,7 @@ export default function QuotationList({ onLoadQuotation, onClose }) {
                         </button>
                         <div ref={previewRef} >
                             <h4 className="text-base font-semibold mb-3">
-                                PARKO ELECTRIC AND ELECTRONICS
+                                Hilal Shopping Mall and Bakers
                             </h4>
 
                             <div className="grid grid-cols-2 gap-3 text-[12px] mb-4">
