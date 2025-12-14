@@ -331,8 +331,10 @@ function Header() {
     {
       name: "Whatsapp Settings",
       slug: `/${primaryPath}/whatsapp`,
-      active: isAdmin() || isOwner() || hasRight("Whatsapp Settings"),
-      isAdmin: isAdmin(),
+      // active: isAdmin() || isOwner() || hasRight("Whatsapp Settings"),
+      // isAdmin: isAdmin(),
+      active: false,
+      isAdmin: false,
 
     },
     // {
