@@ -53,7 +53,7 @@ const BarcodePrinting = () => {
 //   };
 
   const handlePrint = () => {
-    const width = labelSize === "half" ? "40mm" : "60mm";
+    const width = labelSize === "half" ? "30mm" : "60mm";
     const printWindow = window.open("", "_blank", "width=600,height=800");
 
     if (!printWindow) return;
@@ -98,7 +98,7 @@ const BarcodePrinting = () => {
             }
             svg {
               width: 100%;
-              height: 40px;
+              height: 60px;
             }
           </style>
         </head>
