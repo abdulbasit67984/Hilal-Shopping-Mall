@@ -501,21 +501,26 @@ const updateProduct = asyncHandler(async (req, res) => {
             }
 
             // Update inventory individual account only if productPurchasePrice changes
+
             if (productPurchasePrice !== undefined && productPurchasePrice !== oldProduct.productPurchasePrice) {
                 const originalStatusPrice = lastStatusOfPrice.newPrice;
-                lastStatusOfPrice.newPrice = productPurchasePrice;
-
                 const originalPurchasePrice = oldProduct.productPurchasePrice;
+
+                lastStatusOfPrice.newPrice = productPurchasePrice;
                 oldProduct.productPurchasePrice = productPurchasePrice;
 
                 transaction.addOperation(
-                    async () => await oldProduct.save(),
                     async () => {
+                        await lastStatusOfPrice.save();
+                        await oldProduct.save();
+                    },
+                    async () => {
+                        lastStatusOfPrice.newPrice = originalStatusPrice;
                         oldProduct.productPurchasePrice = originalPurchasePrice;
+                        await lastStatusOfPrice.save();
                         await oldProduct.save();
                     }
                 );
-
             }
 
             // Update product total quantity and status of price remaining quantity if productPack or productTotalQuantity changes
@@ -844,10 +849,10 @@ const getExpiryReport = asyncHandler(async (req, res) => {
                 $lte: futureDate,
             }
         })
-        .populate("typeId", "typeName")
-        .populate("companyId", "companyName")
-        .sort({ productExpiryDate: 1 })
-        .lean();
+            .populate("typeId", "typeName")
+            .populate("companyId", "companyName")
+            .sort({ productExpiryDate: 1 })
+            .lean();
 
         return res.status(200).json(
             new ApiResponse(200, expiringProducts, `Expiry report generated for next ${days} days`)
