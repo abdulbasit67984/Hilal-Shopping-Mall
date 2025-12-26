@@ -16,7 +16,7 @@ const BarcodePrinting = () => {
   const [selectedProduct, setSelectedProduct] = useState([]);
   const [labelSize, setLabelSize] = useState("half");
   const [searchQueryProducts, setSearchQueryProducts] = useState([]);
-  
+
   const allProducts = useSelector(state => state.saleItems.allProducts)
 
   const filtered = mockProducts.filter(
@@ -31,26 +31,26 @@ const BarcodePrinting = () => {
   };
 
   useEffect(() => {
-      if (search.length > 2) {
-        const results = allProducts.filter(
-          (product) =>
-            product.productName?.toLowerCase().includes(search.toLowerCase()) ||
-            product.productCode?.toLowerCase().includes(search.toLowerCase())
-        );
-        setSearchQueryProducts(results);
-        console.log('results', results)
-      } else {
-        setSearchQueryProducts([]);
-      }
-    }, [search, allProducts]);
+    if (search.length > 2) {
+      const results = allProducts.filter(
+        (product) =>
+          product.productName?.toLowerCase().includes(search.toLowerCase()) ||
+          product.productCode?.toLowerCase().includes(search.toLowerCase())
+      );
+      setSearchQueryProducts(results);
+      console.log('results', results)
+    } else {
+      setSearchQueryProducts([]);
+    }
+  }, [search, allProducts]);
 
-//   const toggleSelection = (product) => {
-//     setSelectedProducts((prev) =>
-//       prev.find((p) => p.id === product.id)
-//         ? prev.filter((p) => p.id !== product.id)
-//         : [...prev, product]
-//     );
-//   };
+  //   const toggleSelection = (product) => {
+  //     setSelectedProducts((prev) =>
+  //       prev.find((p) => p.id === product.id)
+  //         ? prev.filter((p) => p.id !== product.id)
+  //         : [...prev, product]
+  //     );
+  //   };
 
   const handlePrint = () => {
     const width = labelSize === "half" ? "30mm" : "60mm";
@@ -58,17 +58,20 @@ const BarcodePrinting = () => {
 
     if (!printWindow) return;
 
+    // 1. Sanitize data here to prevent issues in the HTML generation
     const labels = selectedProduct
-      .map(
-        (p) => `
+      .map((p) => {
+        // Ensure code is a string and trim whitespace
+        const safeCode = p.productCode ? String(p.productCode).trim() : "";
+        return `
         <div class="label">
-          <svg id="barcode-${p.productCode}"></svg>
+          <svg id="barcode-${safeCode}"></svg>
           <div class="info">
-            <strong>HSM - </strong> <strong> RS ${p.salePriceDetails[0]?.salePrice1}</strong><br />
-            
+            <strong>HSM - </strong> <strong> RS ${p.salePriceDetails[0]?.salePrice1 || 0
+          }</strong><br />
           </div>
-        </div>`
-      )
+        </div>`;
+      })
       .join("");
 
     printWindow.document.write(`
@@ -76,15 +79,9 @@ const BarcodePrinting = () => {
         <head>
           <style>
             @media print {
-              body {
-                margin: 0;
-                padding: 0;
-              }
+              body { margin: 0; padding: 0; }
             }
-            body {
-              font-family: sans-serif;
-              padding: 10px;
-            }
+            body { font-family: sans-serif; padding: 10px; }
             .label {
               width: ${width};
               text-align: center;
@@ -92,35 +89,43 @@ const BarcodePrinting = () => {
               padding: 8px 0;
               border-bottom: 1px dashed #ccc;
             }
-            .info {
-              font-size: 12px;
-              margin-top: 4px;
-            }
-            svg {
-              width: 100%;
-              height: 60px;
-            }
+            .info { font-size: 12px; margin-top: 4px; }
+            svg { width: 100%; height: 60px; }
           </style>
         </head>
         <body>
           ${labels}
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <script>
-            ${selectedProduct
-              .map(
-                (p) =>
-                  `JsBarcode("#barcode-${p.productCode}", "${p.productCode}", {
-                    format: "CODE128",
-                    width: 2,
-                    height: 40,
-                    displayValue: false,
-                    margin: 0
-                  });`
-              )
-              .join("\n")}
+            // Wait for library to load
             window.onload = () => {
-              window.print();
-              window.onafterprint = () => window.close();
+              ${selectedProduct
+        .map((p) => {
+          const safeCode = p.productCode ? String(p.productCode).trim() : "";
+          // 2. WRAP IN TRY/CATCH: This is the critical fix
+          return `
+                   try {
+                     JsBarcode("#barcode-${safeCode}", "${safeCode}", {
+                        format: "CODE128", 
+                        width: 2,
+                        height: 40,
+                        displayValue: false,
+                        margin: 0
+                      });
+                   } catch (error) {
+                      console.error("Failed to render barcode for: ${safeCode}", error);
+                      // Optional: Render text error in the SVG so you know which one failed
+                      document.getElementById("barcode-${safeCode}").style.display = 'none';
+                   }
+                   `;
+        })
+        .join("\n")}
+
+              // 3. Print happens regardless of errors
+              setTimeout(() => {
+                window.print();
+                window.onafterprint = () => window.close();
+              }, 500); // Small delay ensures SVGs render
             };
           </script>
         </body>
@@ -142,52 +147,51 @@ const BarcodePrinting = () => {
       />
 
       {searchQueryProducts && searchQueryProducts.length > 0 && (
-          <div className="overflow-auto max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 z-20">
-            <table className="min-w-full bg-gray-200 border text-xs">
-              <thead className='sticky -top-0 border-b shadow-sm bg-gray-300 z-10'>
-                <tr>
-                  <th className="py-2 px-1 text-left">Code</th>
-                  <th className="py-2 px-1 text-left">Name</th>
-                  <th className="py-2 px-1 text-left">Type</th>
-                  <th className="py-2 px-1 text-left">Category</th>
-                  <th className="py-2 px-1 text-left">Company</th>
-                  <th className="py-2 px-1 text-left">Supplier</th>
-                  <th className="py-2 px-1 text-left">Sale Price</th>
-                  <th className="py-2 px-1 text-left">Status</th>
-                  <th className="py-2 px-1 text-left">Total Qty</th>
+        <div className="overflow-auto max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 z-20">
+          <table className="min-w-full bg-gray-200 border text-xs">
+            <thead className='sticky -top-0 border-b shadow-sm bg-gray-300 z-10'>
+              <tr>
+                <th className="py-2 px-1 text-left">Code</th>
+                <th className="py-2 px-1 text-left">Name</th>
+                <th className="py-2 px-1 text-left">Type</th>
+                <th className="py-2 px-1 text-left">Category</th>
+                <th className="py-2 px-1 text-left">Company</th>
+                <th className="py-2 px-1 text-left">Supplier</th>
+                <th className="py-2 px-1 text-left">Sale Price</th>
+                <th className="py-2 px-1 text-left">Status</th>
+                <th className="py-2 px-1 text-left">Total Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {searchQueryProducts?.map((product, index) => (
+                <tr key={index} className="border-t cursor-pointer hover:bg-gray-300" onClick={() => handleSelectProduct(product)}>
+                  <td className="px-1 py-1">{product.productCode}</td>
+                  <td className="px-1 py-1">{product.productName}</td>
+                  <td className="px-1 py-1">{(product.typeDetails[0]?.typeName)}</td>
+                  <td className="px-1 py-1">{(product.categoryDetails[0]?.categoryName)}</td>
+                  <td className="px-1 py-1">{(product.companyDetails[0]?.companyName)}</td>
+                  <td className="px-1 py-1">{
+                    product.vendorCompanyDetails.length > 0 ? product.vendorCompanyDetails[0].companyName : product.vendorSupplierDetails[0]?.supplierName
+                  }</td>
+                  <td className="px-1 py-1">{(product.salePriceDetails[0]?.salePrice1)}</td>
+                  <td className="px-1 py-1">{product.status ? "active" : "inactive"}</td>
+                  <td className="px-1 py-1">{product.productTotalQuantity / product.productPack}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {searchQueryProducts?.map((product, index) => (
-                  <tr key={index} className="border-t cursor-pointer hover:bg-gray-300" onClick={() => handleSelectProduct(product)}>
-                    <td className="px-1 py-1">{product.productCode}</td>
-                    <td className="px-1 py-1">{product.productName}</td>
-                    <td className="px-1 py-1">{(product.typeDetails[0]?.typeName)}</td>
-                    <td className="px-1 py-1">{(product.categoryDetails[0]?.categoryName)}</td>
-                    <td className="px-1 py-1">{(product.companyDetails[0]?.companyName)}</td>
-                    <td className="px-1 py-1">{
-                      product.vendorCompanyDetails.length > 0 ? product.vendorCompanyDetails[0].companyName : product.vendorSupplierDetails[0]?.supplierName
-                    }</td>
-                    <td className="px-1 py-1">{(product.salePriceDetails[0]?.salePrice1)}</td>
-                    <td className="px-1 py-1">{product.status ? "active" : "inactive"}</td>
-                    <td className="px-1 py-1">{product.productTotalQuantity / product.productPack}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <ul className="max-h-40 overflow-auto border rounded p-2 mb-4">
         {selectedProduct.map((product) => (
           <li
             key={product.id}
-            className={`cursor-pointer p-2 border-b ${
-              selectedProduct.find((p) => p.id === product.id)
+            className={`cursor-pointer p-2 border-b ${selectedProduct.find((p) => p.id === product.id)
                 ? "bg-blue-100"
                 : ""
-            }`}
-            // onClick={() => toggleSelection(product)}
+              }`}
+          // onClick={() => toggleSelection(product)}
           >
             <div className="flex justify-between">
               <span>{product.productName}</span>
