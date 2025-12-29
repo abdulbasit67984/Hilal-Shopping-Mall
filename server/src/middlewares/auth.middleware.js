@@ -8,7 +8,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     if (process.env.NODE_ENV === 'development') {
         
         const user = await User.findOne().select("-password -refreshToken"); 
-        console.log('user', user)
+        // console.log('user', user)
         req.user = user;  // Attach the user to the request
         return next();  // Skip further token verification and continue to the next handler
     }
