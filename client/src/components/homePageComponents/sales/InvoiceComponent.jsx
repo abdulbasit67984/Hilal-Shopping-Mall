@@ -629,7 +629,7 @@ const InvoiceComponent = () => {
 
       try {
         setIsLoading(true)
-        const response = await config.fetchSingleBill(billNo)
+        const response = await config.fetchSingleBill(viewBillNo)
 
         if (response.data) {
           setBill(response.data);
