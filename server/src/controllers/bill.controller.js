@@ -956,13 +956,13 @@ const getLastBillNo = asyncHandler(async (req, res) => {
         }
     }
 
-    // Generate the next bill number
-    let nextBillNo = "";
+    let billNo = "";
     if (billType === "A4") {
-        // nextBillNo = `A4${businessInitials}${nextSequence.toString().padStart(5, "0")}`;
-        nextBillNo = `${nextSequence.toString().padStart(5, "0")}`;
+        // billNo = `A4${businessInitials}${nextSequence.toString().padStart(5, "0")}`;
+        billNo = `${nextSequence.toString().padStart(5, "0")}`;
     } else if (billType === "thermal") {
-        nextBillNo = `TH${nextSequence.toString().padStart(5, "0")}`;
+        // billNo = `TH${businessInitials}${nextSequence.toString().padStart(5, "0")}`;
+        billNo = `TH${nextSequence.toString().padStart(5, "0")}`;
     }
 
     // Respond with the next bill number
