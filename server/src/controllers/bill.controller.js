@@ -948,11 +948,10 @@ const getLastBillNo = asyncHandler(async (req, res) => {
         }
     }
 
-    let nextSequence = 1; // Default sequence for the first bill
+    let nextSequence = 1;
     if (lastBill && lastBill.billNo) {
-        // Extract numeric part from the last bill number
-        const lastSequence = parseInt(lastBill.billNo.match(/\d+$/)?.[0], 10);
-        if (!isNaN(lastSequence)) {
+        const lastSequence = parseInt(lastBill.billNo.match(/\d+$/)?.[0]);
+        if (lastSequence) {
             nextSequence = lastSequence + 1;
         }
     }
