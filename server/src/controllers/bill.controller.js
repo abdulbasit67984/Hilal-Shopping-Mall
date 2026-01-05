@@ -967,7 +967,7 @@ const getLastBillNo = asyncHandler(async (req, res) => {
 
     // Respond with the next bill number
     return res.status(200).json(
-        new ApiResponse(200, { nextBillNo }, "Next bill number retrieved successfully!")
+        new ApiResponse(200, { nextBillNo: billNo }, "Next bill number retrieved successfully!")
     );
 });
 

@@ -604,7 +604,8 @@ const InvoiceComponent = () => {
           dispatch(setExtraProducts([]))
 
         }
-        setViewBillNo(billNo)
+        console.log('eeee', response)
+        setViewBillNo(response?.data?.bill[0]?.billNo)
         fetchLastBillNo(billType)
 
         if (response) {
