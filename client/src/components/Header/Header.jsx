@@ -317,7 +317,7 @@ function Header() {
         {
           name: "Rights",
           slug: `/${primaryPath}/users/rights`,
-          active: isAdmin() || isOwner() || hasRight("Rights"),
+          active: false,
           isAdmin: isAdmin()
         },
         {

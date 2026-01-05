@@ -67,9 +67,20 @@ const registerBill = asyncHandler(async (req, res) => {
                 .map((word) => word[0].toUpperCase())
                 .join("");
 
-            const lastBill = await Bill.findOne({ BusinessId, billType })
-                .sort({ createdAt: -1 })
-                .select("billNo");
+            const allBills = await Bill.find({ BusinessId, billType })
+                .select("billNo")
+                .lean();
+
+            let highestSequence = 0;
+            let lastBill = null;
+
+            for (const bill of allBills) {
+                const sequence = parseInt(bill.billNo.match(/\d+$/)?.[0], 10);
+                if (sequence > highestSequence) {
+                    highestSequence = sequence;
+                    lastBill = bill;
+                }
+            }
 
             let nextSequence = 1;
             if (lastBill && lastBill.billNo) {
@@ -922,11 +933,20 @@ const getLastBillNo = asyncHandler(async (req, res) => {
         .map((word) => word[0].toUpperCase())
         .join("");
 
-    // Query the last bill of the given type
-    const lastBill = await Bill.findOne({ BusinessId, billType })
-        .sort({ createdAt: -1 }) // Sort by most recent
+    const allBills = await Bill.find({ BusinessId, billType })
         .select("billNo")
         .lean();
+
+    let highestSequence = 0;
+    let lastBill = null;
+
+    for (const bill of allBills) {
+        const sequence = parseInt(bill.billNo.match(/\d+$/)?.[0], 10);
+        if (sequence > highestSequence) {
+            highestSequence = sequence;
+            lastBill = bill;
+        }
+    }
 
     let nextSequence = 1; // Default sequence for the first bill
     if (lastBill && lastBill.billNo) {
@@ -1181,7 +1201,6 @@ const billPosting = asyncHandler(async (req, res) => {
         throw new ApiError(500, `${error.message}`);
     }
 });
-
 
 
 
